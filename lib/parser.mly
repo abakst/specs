@@ -32,9 +32,6 @@
 %token TICK
 %token EOF
 
-%left EQ NEQ
-%left AND OR
-
 %start <Syntax.spec> spec
 %start <Syntax.term> pred
 %{ open Syntax %}
