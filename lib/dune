@@ -1,0 +1,10 @@
+(library
+ (name specs)
+ (libraries smtlib-utils z3 batteries)
+)
+
+(menhir
+  (modules parser)
+)
+
+(ocamllex lexer)

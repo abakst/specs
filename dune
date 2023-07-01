@@ -1,0 +1,5 @@
+(env
+  (dev
+    (flags (:standard -w -69 -w -26 -w -27))
+     )
+)

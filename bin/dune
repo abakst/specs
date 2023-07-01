@@ -1,0 +1,6 @@
+(executable
+ (public_name specs)
+ (name main)
+ (modes byte)
+ (modules main)
+ (libraries batteries specs))
