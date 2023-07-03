@@ -2,8 +2,8 @@
 ;;
 ;; Copyright (C) 2023 Alexander Bakst
 ;;
-;; Author: Alexander Bakst <abakst@certora.com>
-;; Maintainer: Alexander Bakst <abakst@certora.com>
+;; Author: Alexander Bakst
+;; Maintainer: Alexander Bakst
 ;; Created: June 28, 2023
 ;; Modified: June 28, 2023
 ;; Version: 0.0.1
