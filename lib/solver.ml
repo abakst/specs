@@ -39,6 +39,6 @@ module type Solver = sig
 
   val app : ctx -> decl -> term list -> term
 
-  val define_pred : ctx -> string -> (term * sort) list -> term -> decl
+  val define_pred : ctx -> t -> string -> (term * sort) list -> term -> decl
   val decl_args: ctx -> decl -> term list
 end

@@ -38,12 +38,12 @@ module Make(S: Solver.Solver) = struct
     | Gt -> S.gt ctx e1 e2
     | Ge -> S.ge ctx e1 e2
 
-  let compile_requirement ctx state (n, r) =
+  let compile_requirement ctx solver state (n, r) =
     let args = state |> List.map begin fun (x, s) -> S.var ctx x s, s end in
     compile_term ctx state r
-    |> S.define_pred ctx n args
+    |> S.define_pred ctx solver n args
 
-  let compile_transition ctx state t =
+  let compile_transition ctx solver state t =
     let t_args =
       t.bindings
       |> List.map (fun (v: var_decl) -> v.name, compile_sort ctx v.sort)
@@ -63,7 +63,7 @@ module Make(S: Solver.Solver) = struct
     let guard = compile_term ctx (t_args @ pre_state_env) t.guard in
     let rel   = compile_term ctx (t_args @ pre_state_env) t.step in
     let body  = S.conj ctx [guard; rel] in
-    let decl  = S.define_pred ctx t.name args body in
+    let decl  = S.define_pred ctx solver t.name args body in
     (t_args, decl)
 
 
@@ -72,19 +72,19 @@ module Make(S: Solver.Solver) = struct
     |> List.map (fun (d : Syntax.var_decl) ->
         (d.name, compile_sort ctx d.sort))
 
-  let solver_transitions_of_spec ctx env (spec : Syntax.spec) =
+  let solver_transitions_of_spec ctx solver env (spec : Syntax.spec) =
     spec.transitions
-    |> List.map (compile_transition ctx env)
+    |> List.map (compile_transition ctx solver env)
 
-  let solver_reqs_of_spec ctx env (spec : Syntax.spec) =
-    spec.reqs |> List.map (compile_requirement ctx env)
+  let solver_reqs_of_spec ctx solver env (spec : Syntax.spec) =
+    spec.reqs |> List.map (compile_requirement ctx solver env)
 
 
-  let compile ctx spec =
+  let compile ctx solver spec =
     let state_env = env_of_spec ctx spec in
-    let init = compile_requirement ctx state_env ("init", spec.init) in
-    let ts = solver_transitions_of_spec ctx state_env spec in
-    let rs = solver_reqs_of_spec ctx state_env spec in
+    let init = compile_requirement ctx solver state_env ("init", spec.init) in
+    let ts = solver_transitions_of_spec ctx solver state_env spec in
+    let rs = solver_reqs_of_spec ctx solver state_env spec in
     (state_env, init, ts, rs)
 
 end

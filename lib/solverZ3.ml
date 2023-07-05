@@ -71,10 +71,14 @@ struct
   let ge ctx t1 t2 =
     Z3.Arithmetic.mk_ge ctx t1 t2
 
-  let define_pred ctx f argTys body =
+  let define_pred ctx solver f argTys body =
     let (xs, sorts) = List.split argTys in
-    let decl = Z3.FuncDecl.mk_rec_func_decl_s ctx f sorts (bool_sort ctx) in
-    Z3.FuncDecl.add_rec_def ctx decl xs body;
+    let decl = Z3.FuncDecl.mk_func_decl_s ctx f sorts (bool_sort ctx) in
+    let def = Z3.Boolean.mk_eq ctx (Z3.Expr.mk_app ctx decl xs) body in
+    let axiom = Z3.Quantifier.mk_forall_const ctx xs def (Some 1) [] [] None None
+              |> Z3.Quantifier.expr_of_quantifier
+    in
+    Z3.Solver.add solver [ axiom ];
     decl
 
   let decl_args ctx decl =
@@ -87,9 +91,14 @@ struct
   let app ctx f args =
     Z3.Expr.mk_app ctx f args
 
+  let get  =
+    Z3.Z3Array.mk_select
+
+  let set  =
+    Z3.Z3Array.mk_store
+
   let subst t froms tos =
     Z3.Expr.substitute t froms tos
-
 
   let bracket solver (f : unit -> 'a): 'a =
     Z3.Solver.push solver;

@@ -29,8 +29,8 @@ let main fn k =
   let spec = spec_from_file fn in
   let ctx = SolverZ3.mk_context () in
   let solver = SolverZ3.mk_solver ctx in
-  let (env, init, ts, rs) = Z3Compile.compile ctx spec in
-  Z3BMC.bmc ctx solver k env ts rs init
+  let (env, init, ts, rs) = Z3Compile.compile ctx solver spec in
+    Z3BMC.bmc ctx solver k env ts rs init
 
 let () =
   let fn = Sys.argv.(1) in
