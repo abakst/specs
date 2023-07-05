@@ -8,10 +8,10 @@ module Make(S: Solver.Solver) = struct
     | None -> raise (EnvLookup x)
     | Some v -> v
 
-  let compile_sort ctx : sort -> S.sort = function
+  let rec compile_sort ctx : sort -> S.sort = function
     | Bool -> S.bool_sort ctx
     | Int -> S.int_sort ctx
-    | Array _ -> failwith "TODO: Array Sort"
+    | Array (t1, t2) -> S.array_sort ctx (compile_sort ctx t1) (compile_sort ctx t2)
 
   let next_name s = s ^ "!"
 
@@ -22,6 +22,8 @@ module Make(S: Solver.Solver) = struct
     | Not t -> S.not ctx (compile_term ctx env t)
     | Bop (r, t1, t2) -> compile_bin ctx env t1 t2 r
     | Next s -> S.var ctx (next_name s) (lookup env s)
+    | Get (a, p) -> S.get ctx (compile_term ctx env a) (compile_term ctx env p)
+    | Set (a, p, v) -> S.set ctx (compile_term ctx env a) (compile_term ctx env p) (compile_term ctx env v)
 
   and compile_bin ctx env t1 t2 o =
     let e1 = compile_term ctx env t1 in

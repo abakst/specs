@@ -16,6 +16,8 @@ type bop =
   | Lt | Le | Gt | Ge
 
 type term =
+  | Get of (term * term)
+  | Set of (term * term * term)
   | Bool of bool
   | Int of int
   | Var of string

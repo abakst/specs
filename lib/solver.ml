@@ -8,6 +8,8 @@ module type Solver = sig
   type decl
   type model
 
+  val dump_smt : t -> string
+
   val add : t -> term list -> unit
   val check : t -> term list -> model result
 
@@ -16,6 +18,7 @@ module type Solver = sig
 
   val bool_sort : ctx -> sort
   val int_sort : ctx -> sort
+  val array_sort : ctx -> sort -> sort -> sort
 
   val bool : ctx -> bool -> term
   val int : ctx -> int -> term
@@ -38,6 +41,8 @@ module type Solver = sig
   val ge : ctx -> term -> term -> term
 
   val app : ctx -> decl -> term list -> term
+  val get : ctx -> term -> term -> term
+  val set : ctx -> term -> term -> term -> term
 
   val define_pred : ctx -> t -> string -> (term * sort) list -> term -> decl
   val decl_args: ctx -> decl -> term list

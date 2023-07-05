@@ -23,6 +23,9 @@ struct
   let bool_sort ctx =
     Z3.Boolean.mk_sort ctx
 
+  let array_sort ctx s1 s2 =
+    Z3.Z3Array.mk_sort ctx s1 s2
+
   let bool ctx b =
     if b then
       Z3.Boolean.mk_true ctx
@@ -123,6 +126,8 @@ struct
       Solver.UNSAT
 
   let add solver es = Z3.Solver.add solver es
+
+  let dump_smt = Z3.Solver.to_string
 
 end
 

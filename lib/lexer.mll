@@ -23,7 +23,6 @@ rule read =
   | newline { new_line lexbuf; read lexbuf }
   | "#" { read_single_line_comment lexbuf }
   | "when" { WHEN }
-  | "do" { DO }
   | "state" { STATE }
   | "step" { TRANSITION }
   | "init" { INIT }
@@ -50,10 +49,10 @@ rule read =
   | ':' { COLON }
   | ',' { COMMA }
   | ';' { SEMI }
-  | '{' { LEFT_BRACE }
-  | '}' { RIGHT_BRACE }
   | '(' { LEFT_PAREN }
   | ')' { RIGHT_PAREN }
+  | '[' { LEFT_BRACKET }
+  | ']' { RIGHT_BRACKET }
   | _ { raise (SyntaxError ("Unexpected char: " ^ Lexing.lexeme lexbuf)) }
   | eof { EOF }
 

@@ -4,7 +4,6 @@
 %token INIT
 %token TRANSITION
 %token WHEN
-%token DO
 %token EQ
 %token NEQ
 %token NOT
@@ -22,10 +21,10 @@
 %token BOOL_SORT
 %token INT_SORT
 %token ARRAY_SORT
-%token LEFT_BRACE
-%token RIGHT_BRACE
 %token LEFT_PAREN
 %token RIGHT_PAREN
+%token LEFT_BRACKET
+%token RIGHT_BRACKET
 %token COLON
 %token COMMA
 %token SEMI
@@ -52,9 +51,9 @@ sort:
  | INT_SORT { Int }
  | ARRAY_SORT; t1 = sort; t2 = sort { Array (t1, t2) }
 
-bool_term:
- | t = bool_term; AND; u = bool_term { Bop(And, t, u) }
- | t = bool_term; OR; u = bool_term { Bop(Or, t, u) }
+term:
+ | t = term; AND; u = term { Bop(And, t, u) }
+ | t = term; OR; u = term { Bop(Or, t, u) }
  | e = equality  { e }
 
 equality:
@@ -63,13 +62,13 @@ equality:
  | c = compare { c }
 
 compare:
- | t = term; LT; u = term { Bop(Lt, t, u ) }
- | t = term; GT; u = term { Bop(Gt, t, u ) }
- | t = term; LE; u = term { Bop(Le, t, u ) }
- | t = term; GE; u = term { Bop(Ge, t, u ) }
- | t = term { t }
+ | t = arith; LT; u = arith { Bop(Lt, t, u ) }
+ | t = arith; GT; u = arith { Bop(Gt, t, u ) }
+ | t = arith; LE; u = arith { Bop(Le, t, u ) }
+ | t = arith; GE; u = arith { Bop(Ge, t, u ) }
+ | t = arith { t }
 
-term:
+arith:
  | t = unary; PLUS; u = unary { Bop(Plus, t, u) }
  | t = unary; MINUS; u = unary { Bop(Minus, t, u) }
  | u = unary { u }
@@ -79,41 +78,34 @@ unary:
  | p = primary { p }
 
 primary:
+ | a = primary; LEFT_BRACKET; p = term; RIGHT_BRACKET { Get (a, p) }
+ | a = primary; LEFT_BRACKET; p = term; DEFEQ; v = term; RIGHT_BRACKET { Set(a, p, v) }
  | b = BOOL { Bool b }
  | i = INT { Int i }
  | x = ID; TICK { Next x }
  | x = ID { Var x }
- | LEFT_PAREN; t = bool_term; RIGHT_PAREN { t }
-
-/* term: */
-/*  | b = BOOL { Bool b } */
-/*  | i = INT { Int i } */
-/*  | x = ID; TICK { Next x } */
-/*  | x = ID { Var x } */
-/*  | NOT; t = term { Not(t) } */
-/*  | t1 = term; b = bin_op; t2 = term { Bop (b, t1, t2) } */
-/*  | LEFT_PAREN; t = term; RIGHT_PAREN { t } */
+ | LEFT_PAREN; t = term; RIGHT_PAREN { t }
 
 init:
-  INIT; DEFEQ; t = bool_term; { t }
+  INIT; DEFEQ; t = term; { t }
 
 pred:
-  b = bool_term; EOF { b }
+  b = term; EOF { b }
 
 transition_decl:
    | name = ID; LEFT_PAREN; bs = separated_list(COMMA, binder); RIGHT_PAREN { (name, bs) }
 
 transition:
-  | TRANSITION; d = transition_decl; WHEN; g = bool_term; DEFEQ; t = bool_term;
+  | TRANSITION; d = transition_decl; WHEN; g = term; DEFEQ; t = term;
     { mk_trans (fst d) (snd d) g t }
-  | TRANSITION; d = transition_decl; DEFEQ; t = bool_term;
+  | TRANSITION; d = transition_decl; DEFEQ; t = term;
     { mk_trans (fst d) (snd d) (Bool true) t }
 
 transitions:
   ts = list(transition) { ts }
 
 requirement:
-  | REQ; id = ID; DEFEQ; r = bool_term { (id, r) }
+  | REQ; id = ID; DEFEQ; r = term { (id, r) }
 
 requirements:
   ps = list(requirement) { ps }
