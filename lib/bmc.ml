@@ -15,20 +15,38 @@ module Make(S: Solver) = struct
     let transitions = List.map inst ts in
     (S.disj ctx transitions, next_state)
 
-  let check_requirements ctx solver state rs =
+  let apply_requirements ctx state rs =
     rs
     |> List.map (fun r -> S.app ctx r state)
     |> S.conj ctx
     |> S.not ctx
     |> List.singleton
-    |> S.check solver
 
-  let bmc ctx solver k env ts rs init =
+  let check_requirements ctx state rs =
+    apply_requirements ctx state rs
+    |> S.check ctx
+
+  let unroll ctx k env ts rs init =
     let rec go i state =
       if i < k then
         let step_formula, state' = step ctx state env ts in
-        S.add solver [ step_formula ];
-        match check_requirements ctx solver state' rs with
+        S.add ctx [ step_formula ];
+        go (i + 1) state'
+      else
+        S.add ctx (apply_requirements ctx state rs)
+    in
+    let state0 = fresh ctx env in
+    S.add ctx [ S.app ctx init state0 ];
+    go 0 state0
+
+
+  let bmc ctx k env ts rs init =
+    let rec go i state =
+      if i < k then
+        let step_formula, state' = step ctx state env ts in
+        S.add ctx [ step_formula ];
+        let negated_prop = apply_requirements ctx state rs in
+        match S.check ctx negated_prop with
         | Solver.SAT m -> (i, m, state')
         | Solver.UNKNOWN -> (i, None, state')
         | Solver.UNSAT -> go (i + 1) state'
@@ -37,7 +55,7 @@ module Make(S: Solver) = struct
     in
     print_endline ("***** Checking " ^ string_of_int k ^ " steps *****");
     let state = fresh ctx env in
-    S.add solver [ S.app ctx init state ];
+    S.add ctx [ S.app ctx init state ];
     let (i, _, _) = go 0 state in
     if i = k then
       print_endline ("No counterexample found of length " ^ string_of_int k)

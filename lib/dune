@@ -1,6 +1,15 @@
 (library
  (name specs)
- (libraries smtlib-utils z3 batteries)
+ (modules Solver
+          SolverZ3
+          Lexer
+          Parser
+          Syntax
+          Compile
+          Bmc
+ )
+ (libraries smtlib-utils z3 batteries ctypes.foreign)
+; (flags :standard -cclib -lmathsat)
 )
 
 (menhir
