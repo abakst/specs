@@ -83,7 +83,6 @@ let main (module Cfg: ConfigType)  fn k =
   let module B = Bmc.Make(Cfg.S) in
   let spec = spec_from_file fn in
   let solver = Cfg.mk_solver () in
-  (* let solver = SolverZ3.mk_solver () in *)
   let (env, init, ts, rs) = C.compile solver spec in
   match Opt.opt dump_smt_opt with
   | Some true ->
