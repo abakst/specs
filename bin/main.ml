@@ -5,8 +5,11 @@ open Lexing
 
 open BatOptParse
 
-module Z3Compile = Compile.Make (SolverZ3.S)
-module Z3BMC = Bmc.Make(SolverZ3.S)
+(* module Z3Compile = Compile.Make (SolverZ3.S) *)
+(* module Z3BMC = Bmc.Make(SolverZ3.S) *)
+
+(* module SMTLibCompile = Compile.Make (Smtlib.SMTLibSolver) *)
+(* module SMTLibBMC = Bmc.Make(Smtlib.SMTLibSolver) *)
 
 let prog_name = "abst"
 
@@ -15,6 +18,9 @@ let unroll_opt =
 
 let dump_smt_opt =
   StdOpt.store_true ()
+
+let solver_name =
+  StdOpt.str_option ~default:"z3" ()
 
 let options =
   let base = OptParser.make
@@ -30,6 +36,11 @@ let options =
     ~long_name:"smtlib"
     base
     dump_smt_opt;
+  OptParser.add
+    ~help:"Solver (z3|z3-smtlib|cvc5)"
+    ~long_name:"solver"
+    base
+    solver_name;
   base
 
 let print_position outx lexbuf =
@@ -51,16 +62,41 @@ let spec_from_file fn =
   let lexbuf = Lexing.from_channel f_channel in
   parse_spec Parser.spec lexbuf
 
-let main fn k =
+module type ConfigType = sig
+  module S: Solver.Solver
+  val mk_solver : unit -> S.t
+end
+
+module Z3Config: ConfigType = struct
+  module S = SolverZ3.S
+  let mk_solver _ = SolverZ3.mk_solver ()
+end
+
+module SMTLIBZ3: ConfigType = struct
+  module S = Smtlib.SMTLibSolver
+  let mk_solver _ = Smtlib.SmtlibProcess.spawn_solver "z3" ["-in"]
+end
+
+module SMTLIBCVC5: ConfigType = struct
+  module S = Smtlib.SMTLibSolver
+  let mk_solver _ =
+    Smtlib.SmtlibProcess.spawn_solver "cvc5"
+      ["--force-logic=ALL"; "--lang=smt2"; "--interactive"; "--incremental"]
+end
+
+let main (module Cfg: ConfigType)  fn k =
+  let module C = Compile.Make(Cfg.S) in
+  let module B = Bmc.Make(Cfg.S) in
   let spec = spec_from_file fn in
-  let solver = SolverZ3.mk_solver () in
-  let (env, init, ts, rs) = Z3Compile.compile solver spec in
+  let solver = Cfg.mk_solver () in
+  (* let solver = SolverZ3.mk_solver () in *)
+  let (env, init, ts, rs) = C.compile solver spec in
   match Opt.opt dump_smt_opt with
   | Some true ->
-    Z3BMC.unroll solver k env ts rs init;
-    print_endline (Z3.Solver.to_string (snd solver));
+    B.unroll solver k env ts rs init;
+    print_endline (Cfg.S.dump_smt solver);
   | _ ->
-    Z3BMC.bmc solver k env ts rs init
+    B.bmc solver k env ts rs init
 
 let () =
   let args = OptParser.parse_argv options in
@@ -69,4 +105,10 @@ let () =
           | Some k -> k
           | _ -> 3
   in
-  main fn k
+  let cfg = match Opt.get solver_name with
+    | "z3" -> (module Z3Config: ConfigType)
+    | "z3-smtlib" -> (module SMTLIBZ3: ConfigType)
+    | "cvc5" -> (module SMTLIBCVC5: ConfigType)
+    | s -> print_endline ("Unknown solver configuration: " ^ s); exit(-1)
+  in
+  main cfg fn k

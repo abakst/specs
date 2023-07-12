@@ -81,7 +81,6 @@ module Make(S: Solver.Solver) = struct
   let solver_reqs_of_spec ctx env (spec : Syntax.spec) =
     spec.reqs |> List.map (compile_requirement ctx env)
 
-
   let compile ctx spec =
     let state_env = env_of_spec ctx spec in
     let init = compile_requirement ctx state_env ("init", spec.init) in
