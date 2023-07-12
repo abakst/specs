@@ -5,12 +5,6 @@ open Lexing
 
 open BatOptParse
 
-(* module Z3Compile = Compile.Make (SolverZ3.S) *)
-(* module Z3BMC = Bmc.Make(SolverZ3.S) *)
-
-(* module SMTLibCompile = Compile.Make (Smtlib.SMTLibSolver) *)
-(* module SMTLibBMC = Bmc.Make(Smtlib.SMTLibSolver) *)
-
 let prog_name = "abst"
 
 let unroll_opt =
